@@ -33,3 +33,14 @@ def print_accuracy_per_class(model: Module, classes: list, batch_size: int):
     for i in range(class_amount):
         print('Accuracy of %5s : %2d %%' % (
             classes[i], 100 * class_correct[i] / class_total[i]))
+
+def count_model_parameters(model: Module, trainable: bool):
+    """
+    Returns the total amount of parameters in a model.
+    
+    args:
+        model : model to count the parameters of
+        trainable : whether to count the trainable params or not
+    """
+    return (pytorch_total_params = sum(p.numel() for p in model.parameters()) ) if not trainable else
+           (pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad))
