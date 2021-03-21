@@ -1,3 +1,9 @@
+"""
+ViT implementation taken from lucidrains/vit-pytorch on Github
+https://github.com/lucidrains/vit-pytorch/blob/main/examples/cats_and_dogs.ipynb
+
+"""
+
 import torch
 from torch import nn, einsum
 import torch.nn.functional as F
@@ -46,7 +52,7 @@ class Attention(nn.Module):
         return out
 
 class ViT(nn.Module):
-    def __init__(self, *, image_size, patch_size, num_classes, dim, no_of_blocks, heads, mlp_dim, pool = 'cls', channels = 3, dim_head = 64, dropout = 0., emb_dropout = 0.):
+    def __init__(self, image_size, patch_size, num_classes, dim, no_of_blocks, heads, mlp_dim, pool = 'cls', channels = 3, dim_head = 64, dropout = 0., emb_dropout = 0.):
         super().__init__()
         assert image_size % patch_size == 0, 'Image dimensions must be divisible by the patch size.'
         num_patches = (image_size // patch_size) ** 2
@@ -64,7 +70,7 @@ class ViT(nn.Module):
 
         attention = Attention(dim, heads = heads, dim_head = dim_head, dropout = dropout)
 
-        self.encoder = Encoder(dim, no_of_blocks, heads, dim_head, mlp_dim, dropout, attention)
+        self.encoder = Encoder(dim, no_of_blocks, mlp_dim, attention, dropout = dropout)
 
 
     def forward(self, x, mask = None):
@@ -76,5 +82,5 @@ class ViT(nn.Module):
         x += self.pos_embedding[:, :(n + 1)]
         x = self.dropout(x)
 
-        return self.mlp_head(x) self.encoder(x, mask)
+        return self.encoder(x, mask)
         

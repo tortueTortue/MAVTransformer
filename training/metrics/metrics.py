@@ -42,5 +42,5 @@ def count_model_parameters(model: Module, trainable: bool):
         model : model to count the parameters of
         trainable : whether to count the trainable params or not
     """
-    return (pytorch_total_params = sum(p.numel() for p in model.parameters()) ) if not trainable else
-           (pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad))
+    return (sum(p.numel() for p in model.parameters()) ) if not trainable else \
+           (sum(p.numel() for p in model.parameters() if p.requires_grad))

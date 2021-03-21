@@ -41,7 +41,7 @@ class FeedForward(nn.Module):
         return self.net(x)
 
 class Encoder(nn.Module):
-    def __init__(self, dim, no_of_blocks, mlp_dim, dropout = 0., attention):
+    def __init__(self, dim, no_of_blocks, mlp_dim, attention, dropout = 0.):
         super().__init__()
         self.layers = nn.ModuleList([])
         for _ in range(no_of_blocks):

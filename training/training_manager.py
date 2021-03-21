@@ -5,8 +5,8 @@ from torch.utils.data import Dataset, DataLoader
 from torch.nn import Module, CrossEntropyLoss
 from torch.optim import SGD
 
-from utils.utils import batches_to_device, get_default_device, to_device, save_checkpoints
-from metrics.metrics import accuracy
+from training.utils.utils import batches_to_device, get_default_device, to_device, save_checkpoints
+from training.metrics.metrics import accuracy
 
 # TODO : Add configs for this one
 PATH = ""
@@ -30,6 +30,7 @@ def evaluate(model: Module, val_set: DataLoader):
     return {'val_loss': epoch_loss.item(), 'val_acc': epoch_acc.item()}
 
 def train(epochs_no: int, model: Module, train_set: DataLoader, val_set: DataLoader):
+    loss = CrossEntropyLoss()
     history = []
     optimizer = SGD(model.parameters(), lr=0.001, momentum=0.9)
     

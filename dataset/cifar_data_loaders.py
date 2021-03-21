@@ -10,6 +10,8 @@ dataset = CIFAR10(root='data/', download=True, transform=ToTensor())
 test_dataset = CIFAR10(root='data/', train=False, transform=ToTensor())
 
 labels = dataset.classes
+classes = ['airplane', 'automobile', 'bird', 'cat', 'deer',
+           'dog', 'deer', 'frog', 'horse', 'ship', 'truck' ]
 
 torch.manual_seed(43)
 train_dataset, val_dataset = random_split(dataset, [int(len(dataset) * 0.85),
@@ -20,6 +22,29 @@ batch_size=128
 train_loader = DataLoader(train_dataset, batch_size, shuffle=True, num_workers=4, pin_memory=True)
 val_loader = DataLoader(val_dataset, batch_size*2, num_workers=4, pin_memory=True)
 test_loader = DataLoader(test_dataset, batch_size*2, num_workers=4, pin_memory=True)
+
+class Cifar10Dataset:
+    def __init__(self):
+        dataset = CIFAR10(root='data/', download=True, transform=ToTensor())
+        test_dataset = CIFAR10(root='data/', train=False, transform=ToTensor())
+        
+        batch_size=128
+        
+        self.labels = dataset.classes
+        self.classes = ['airplane', 'automobile', 'bird', 'cat', 'deer',
+                        'dog', 'deer', 'frog', 'horse', 'ship', 'truck' ]
+
+
+        torch.manual_seed(43)
+        train_dataset, val_dataset = random_split(dataset, [int(len(dataset) * 0.85),
+                                                            int(len(dataset) * 0.15)])
+        self.train_loader = DataLoader(train_dataset, batch_size, shuffle=True, num_workers=4, pin_memory=True)
+        self.val_loader = DataLoader(val_dataset, batch_size*2, num_workers=4, pin_memory=True)
+        self.test_loader = DataLoader(test_dataset, batch_size*2, num_workers=4, pin_memory=True)
+
+    def get_dataloaders(self, batch=10):
+        return self.train_loader, self.val_loader, self.test_loader
+
 
 def run():
     torch.multiprocessing.freeze_support()

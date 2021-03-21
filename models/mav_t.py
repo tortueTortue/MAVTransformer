@@ -23,15 +23,16 @@ from models.ViT import ViT
 from models.LAT import LAT
 
 class MAViT(nn.Module):
-    def __init__(self, *, image_size, patch_size, num_classes, dim, no_of_blocks, heads,
+    def __init__(self, image_size, patch_size, num_classes, dim, no_of_blocks, heads,
                  mlp_dim, pool = 'cls', channels = 3, dim_head = 64, dropout = 0.,
-                 emb_dropout = 0.):
-        self.ViT = ViT(*, image_size, patch_size, num_classes, dim, no_of_blocks, heads,
+                 emb_dropout = 0., is_vit_first: bool = True):
+        super(MAViT, self).__init__()
+        self.is_vit_first = is_vit_first
+        self.ViT = ViT(image_size, patch_size, num_classes, dim, no_of_blocks, heads,
                         mlp_dim, pool, channels, dim_head, dropout,
                         emb_dropout)
 
         self.LAT = LAT(dim, no_of_blocks, mlp_dim, dropout = dropout)
-
         self.pool = pool
         self.to_latent = nn.Identity()
 
@@ -41,8 +42,7 @@ class MAViT(nn.Module):
         )
 
     def forward(self, x, mask = None):
-        x = self.ViT(x)
-        x = self.LAT(x)
+        x = self.LAT(self.ViT(x)) if self.is_vit_first else self.ViT(self.LAT(x))
 
         x = x.mean(dim = 1) if self.pool == 'mean' else x[:, 0]
         x = self.to_latent(x)

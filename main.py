@@ -1,48 +1,41 @@
 """
-Trying out the Kaggle Intel Scene classification challenge using a Transformer Encoder/ Residual Network Hybrid.
 
-Kaggle Intel Challenge
-https://www.kaggle.com/puneet6060/intel-image-classification
 """
 
 import torchvision.models as models
-from 
+from models.mav_t import MAViT
 
-from training_manager.training_manager import train_model
-from dataset.intel_dataset import IntelScenesDataset
-from utils.utils import save_model
-from metrics.metrics import print_accuracy_per_class
+from training.training_manager import train_model
+from dataset.cifar_data_loaders import Cifar10Dataset
+from training.utils.utils import save_model
+from training.metrics.metrics import print_accuracy_per_class, count_model_parameters
 
 
 if __name__ == '__main__':
     # TODO Add as config
     model_dir = ""
-    classes = ['buildings', 'forest', 'glacier', 'mountain', 'sea', 'street']
     batch_size = 30
     epochs = 100
-    intel_data = IntelScenesDataset()
+    cifar10_data = Cifar10Dataset()
+    classes = cifar10_data.classes
 
-    # ResNet18
-    resNet18 = models.resnet34(pretrained=True)
-    save_model(train_model(epochs, resNet18, "ResNet18", intel_data), "ResNet18", model_dir, batch_size)
-    print_accuracy_per_class(resNet18, classes, batch_size)
+    """
+    In the paper introducing ViT "AN IMAGE IS WORTH 16X16 WORDS:TRANSFORMERS FOR IMAGE
+    RECOGNITION AT SCALE", the images from ImageNet were divided into 16 by 16 patches.
+    """
+    # MAViT ViT first
+    vitFirst = MAViT(32, 16, len(classes), 16 * 16, 2, 1,
+                 16 * 16, pool = 'cls', channels = 3, dim_head = 64, dropout = 0.,
+                 emb_dropout = 0., is_vit_first=True)
+    print(f"Parameters {count_model_parameters(vitFirst, False)}")
+    save_model(train_model(epochs, vitFirst, "vitFirst", cifar10_data, batch_size), "vitFirst", model_dir)
+    print_accuracy_per_class(vitFirst, classes, batch_size)
 
-    # ResNet34
-    resNet34 = models.resnet34(pretrained=True)
-    save_model(train_model(epochs, resNet34, "ResNet34", intel_data), "ResNet34", model_dir, batch_size)
-    print_accuracy_per_class(resNet34, classes, batch_size)
+    # MAViT LAT first
+    latFirst = MAViT(32, 16, len(classes), 16 * 16, 2, 1,
+                 16 * 16, pool = 'cls', channels = 3, dim_head = 64, dropout = 0.,
+                 emb_dropout = 0., is_vit_first=False)
+    print(f"Parameters {count_model_parameters(latFirst, False)}")
+    save_model(train_model(epochs, latFirst, "latFirst", cifar10_data, batch_size), "latFirst", model_dir)
+    print_accuracy_per_class(latFirst, classes, batch_size)
 
-    # ResNet50
-    resNet50 = models.resnet50(pretrained=True)
-    save_model(train_model(epochs, resNet50, "ResNet50", intel_data), "ResNet50", model_dir, batch_size)
-    print_accuracy_per_class(resNet50, classes, batch_size)
-
-    # Resformer-18
-    resNet50 = models.resnet50(pretrained=True)
-    save_model(train_model(epochs, resNet50, "Resformer-18", intel_data), "Resformer-18", model_dir, batch_size)
-    print_accuracy_per_class(resNet50, classes, batch_size)
-
-    # Resformer-34
-    resNet50 = models.resnet50(pretrained=True)
-    save_model(train_model(epochs, resNet50, "Resformer-34", intel_data), "Resformer-34", model_dir, batch_size)
-    print_accuracy_per_class(resNet50, classes, batch_size)

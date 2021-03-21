@@ -71,26 +71,15 @@ class AttentionConv(nn.Module):
         init.normal_(self.rel_w, 0, 1)
 
 
-    def reset_parameters(self):
-        init.kaiming_normal_(self.key_conv.weight, mode='fan_out', nonlinearity='relu')
-        init.kaiming_normal_(self.query_conv.weight, mode='fan_out', nonlinearity='relu')
-        for _ in self.value_conv:
-            init.kaiming_normal_(_.weight, mode='fan_out', nonlinearity='relu')
-
-        init.normal_(self.emb_a, 0, 1)
-        init.normal_(self.emb_b, 0, 1)
-        init.normal_(self.emb_mix, 0, 1)
-
-
 class LAT(nn.Module):
     """
     Local Attention Encoder
     """
     def __init__(self, dim, no_of_blocks, mlp_dim, dropout = 0.):
-
+        super(LAT, self).__init__()
+        
         attention = AttentionConv(dim, dim, kernel_size=7, padding=3, groups=8)
-
-        self.encoder = Encoder(dim, no_of_blocks, mlp_dim, dropout=dropout, attention)
+        self.encoder = Encoder(dim, no_of_blocks, mlp_dim, attention, dropout = dropout)
 
     def forward(self, x):
         return self.encoder(x)
