@@ -30,9 +30,26 @@ value =  mem_blocks_divider(w_value(small_pic_batch).view((1,1,6,6))).view((1,1,
 # q(i,j) * k(a,b) where i,j are pixel col and row AND a,b are memory block size
 att_score = soft(torch.einsum('b c n g q, b c n p ->b c n g p', query, key))
 
-print(torch.matmul(att_score, value).view(1,1,9*4))
+# print(torch.matmul(att_score, value).view(1,1,9*4))
 
 # avg pooling
+
+def modif(q,k,v):
+    q[0][0][0][0] = 0.81
+    q[0][0][0][1] = 0.6
+    q[0][0][0][2] = 0.54
+    q[0][0][0][3] = 0.6
+
+    k[0][0][0][0] = 1.08
+    k[0][0][0][1] = 0.8
+    k[0][0][0][2] = 0.72
+    k[0][0][0][3] = 0.8
+
+    v[0][0][0][0] = 1.35
+    v[0][0][0][1] = 1
+    v[0][0][0][2] = 1
+    v[0][0][0][3] = 20
+
 
 class LocalAttention(nn.Module):
     def __init__(self, in_features, qvk_dim, memory_block_size, kernel_size):
@@ -58,15 +75,40 @@ class LocalAttention(nn.Module):
         """
         Here we assume that x is in the shape (b, c, h * w)
         """
-
-        query = torch.unsqueeze(self.mem_blocks_divider(self.w_query(x)), dim=4)
-        key = self.mem_blocks_divider(self.w_key(x))
-        value = torch.unsqueeze(self.mem_blocks_divider(self.w_value(x)), dim=4)
-
+        batch_size, channels, map_size = x.shape
+        height = int(math.sqrt(map_size))
+        query = torch.unsqueeze(self.mem_blocks_divider(self.w_query(x).view((batch_size, channels, height, height))), dim=4)
+        key = self.mem_blocks_divider(self.w_key(x).view((batch_size, channels, height, height)))
+        value = torch.unsqueeze(self.mem_blocks_divider(self.w_value(x).view((batch_size, channels, height, height))), dim=4)
+        
         att_score = soft(torch.einsum('b c n g q, b c n p -> b c n g p', query, key))
 
         attention = torch.matmul(att_score, value)
 
         # no avg pooling for now
 
-        return attention.views(-1, attention.shape[1], attention.shape[2] * attention.shape[3])
+        return attention#attention.view(-1, attention.shape[1], attention.shape[2] * attention.shape[3])
+
+
+#### TEST
+
+x = torch.ones((10,3,6,6))
+x = x.view((10,3,6*6))
+
+x[0][0][0] = 0.27
+x[0][0][1] = 0.2
+x[0][0][6] = 0.18
+x[0][0][7] = 0.2
+
+local_att = LocalAttention(6*6, 6*6, 2, 2)
+# local_att.eval()
+
+local_att.w_query.weight.data.fill_(3)
+local_att.w_key.weight.data.fill_(4)
+local_att.w_value.weight.data.fill_(5)
+
+print("x")
+print(x[0][0].view((6,6)))
+
+print("att")
+print(local_att(x)[0][0][0])
