@@ -14,9 +14,9 @@ from training.metrics.metrics import print_accuracy_per_class, count_model_param
 if __name__ == '__main__':
     # TODO Add as config
     model_dir = ""
-    batch_size = 30
+    batch_size = 5
     epochs = 100
-    cifar10_data = Cifar10Dataset()
+    cifar10_data = Cifar10Dataset(batch_size=batch_size)
     classes = cifar10_data.classes
 
     """
@@ -24,16 +24,16 @@ if __name__ == '__main__':
     RECOGNITION AT SCALE", the images from ImageNet were divided into 16 by 16 patches.
     """
     # MAViT ViT first
-    vitFirst = MAViT(32, 16, len(classes), 16 * 16, 2, 1,
-                 16 * 16, pool = 'cls', channels = 3, dim_head = 64, dropout = 0.,
-                 emb_dropout = 0., is_vit_first=True)
+    vitFirst = MAViT(32, 4, len(classes), 6 * 8, 3, 1,
+                 8 * 8, pool = 'cls', channels = 3, dim_head = 64, dropout = 0.,
+                 emb_dropout = 0., is_vit_first=True, batch_size=batch_size)
     print(f"Parameters {count_model_parameters(vitFirst, False)}")
     save_model(train_model(epochs, vitFirst, "vitFirst", cifar10_data, batch_size), "vitFirst", model_dir)
     print_accuracy_per_class(vitFirst, classes, batch_size)
 
     # MAViT LAT first
-    latFirst = MAViT(32, 16, len(classes), 16 * 16, 2, 1,
-                 16 * 16, pool = 'cls', channels = 3, dim_head = 64, dropout = 0.,
+    latFirst = MAViT(32, 4, len(classes), 8 * 8, 3, 1,
+                 8 * 8, pool = 'cls', channels = 3, dim_head = 64, dropout = 0.,
                  emb_dropout = 0., is_vit_first=False)
     print(f"Parameters {count_model_parameters(latFirst, False)}")
     save_model(train_model(epochs, latFirst, "latFirst", cifar10_data, batch_size), "latFirst", model_dir)

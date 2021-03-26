@@ -24,11 +24,9 @@ val_loader = DataLoader(val_dataset, batch_size*2, num_workers=4, pin_memory=Tru
 test_loader = DataLoader(test_dataset, batch_size*2, num_workers=4, pin_memory=True)
 
 class Cifar10Dataset:
-    def __init__(self):
+    def __init__(self, batch_size=128):
         dataset = CIFAR10(root='data/', download=True, transform=ToTensor())
         test_dataset = CIFAR10(root='data/', train=False, transform=ToTensor())
-        
-        batch_size=128
         
         self.labels = dataset.classes
         self.classes = ['airplane', 'automobile', 'bird', 'cat', 'deer',

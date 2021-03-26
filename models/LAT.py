@@ -11,7 +11,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
-
+import matplotlib.pyplot as plt
 import math
 
 from models.transformer_encoder import Encoder
@@ -19,6 +19,7 @@ from models.transformer_encoder import Encoder
 class AttentionConv(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, groups=1, bias=False):
         super(AttentionConv, self).__init__()
+        self.in_channels = in_channels
         self.out_channels = out_channels
         self.kernel_size = kernel_size
         self.stride = stride
@@ -31,13 +32,22 @@ class AttentionConv(nn.Module):
         self.rel_w = nn.Parameter(torch.randn(out_channels // 2, 1, 1, 1, kernel_size), requires_grad=True)
 
         # Switch for linears for performance
+        # self.key_conv = nn.Linear(in_channels, out_channels, bias=bias)
+        # self.query_conv = nn.Linear(in_channels, out_channels, bias=bias)
+        # self.value_conv = nn.Linear(in_channels, out_channels, bias=bias)
         self.key_conv = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=bias)
         self.query_conv = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=bias)
         self.value_conv = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=bias)
 
         self.reset_parameters()
 
-    def forward(self, x):
+    def forward(self, x, mask = None):
+        # TODO FIX THIS CONV BS!!!
+        x = x.view(x.shape[0], 1, x.shape[1], x.shape[2])
+            
+        if len(x.size()) == 3:
+            height = width = int(math.sqrt(x.shape[2]))
+            x = torch.reshape(x, (x.shape[0], x.shape[1], height, width))
         batch, channels, height, width = x.size()
 
         padded_x = F.pad(x, [self.padding, self.padding, self.padding, self.padding])
@@ -60,7 +70,7 @@ class AttentionConv(nn.Module):
         out = F.softmax(out, dim=-1)
         out = torch.einsum('bnchwk,bnchwk -> bnchw', out, v_out).view(batch, -1, height, width)
 
-        return out
+        return torch.reshape(out, (out.shape[0], out.shape[1] * out.shape[2], out.shape[3]))
 
     def reset_parameters(self):
         init.kaiming_normal_(self.key_conv.weight, mode='fan_out', nonlinearity='relu')
@@ -75,11 +85,14 @@ class LAT(nn.Module):
     """
     Local Attention Encoder
     """
-    def __init__(self, dim, no_of_blocks, mlp_dim, dropout = 0.):
+    def __init__(self, feature_size, no_of_blocks, mlp_dim, dropout = 0.):
         super(LAT, self).__init__()
         
-        attention = AttentionConv(dim, dim, kernel_size=7, padding=3, groups=8)
-        self.encoder = Encoder(dim, no_of_blocks, mlp_dim, attention, dropout = dropout)
+        first_attention = AttentionConv(1, mlp_dim, kernel_size=7, padding=3, groups=8)
+        self.first_encoder = Encoder(mlp_dim, no_of_blocks, feature_size, first_attention, dropout = dropout)
+
+        attention = AttentionConv(mlp_dim, mlp_dim, kernel_size=7, padding=3, groups=8)
+        self.encoder = Encoder(mlp_dim, no_of_blocks, mlp_dim, attention, dropout = dropout)
 
     def forward(self, x):
-        return self.encoder(x)
+        return self.encoder(self.first_encoder(x))

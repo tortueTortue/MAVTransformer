@@ -25,14 +25,25 @@ from models.LAT import LAT
 class MAViT(nn.Module):
     def __init__(self, image_size, patch_size, num_classes, dim, no_of_blocks, heads,
                  mlp_dim, pool = 'cls', channels = 3, dim_head = 64, dropout = 0.,
-                 emb_dropout = 0., is_vit_first: bool = True):
+                 emb_dropout = 0., is_vit_first: bool = True, batch_size = 128):
+        """
+        args:
+            dim : output vector length (in the case of ViT, it is the length of 
+                                        the patches after going through the first linear)
+        """
         super(MAViT, self).__init__()
         self.is_vit_first = is_vit_first
         self.ViT = ViT(image_size, patch_size, num_classes, dim, no_of_blocks, heads,
                         mlp_dim, pool, channels, dim_head, dropout,
                         emb_dropout)
 
-        self.LAT = LAT(dim, no_of_blocks, mlp_dim, dropout = dropout)
+        # Reshape patches into image
+        self.no_of_patches = int((image_size / patch_size) ** 2)
+
+        if self.is_vit_first:
+            self.LAT = LAT(self.no_of_patches, no_of_blocks, dim, dropout = dropout)
+        else :
+            self.LAT = LAT(image_size, no_of_blocks, mlp_dim, dropout = dropout)
         self.pool = pool
         self.to_latent = nn.Identity()
 
@@ -42,7 +53,13 @@ class MAViT(nn.Module):
         )
 
     def forward(self, x, mask = None):
-        x = self.LAT(self.ViT(x)) if self.is_vit_first else self.ViT(self.LAT(x))
+        if self.is_vit_first:
+            x = self.ViT(x)
+            class_token, x = torch.split(x, [1, self.no_of_patches], dim=1)
+            x = self.LAT(x)
+            x = torch.cat((class_token, x), dim=1)
+        else: 
+            x = self.ViT(self.LAT(x))
 
         x = x.mean(dim = 1) if self.pool == 'mean' else x[:, 0]
         x = self.to_latent(x)

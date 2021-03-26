@@ -1,6 +1,6 @@
 """
 ViT implementation taken from lucidrains/vit-pytorch on Github
-https://github.com/lucidrains/vit-pytorch/blob/main/examples/cats_and_dogs.ipynb
+https://github.com/lucidrains/vit-pytorch/blob/main/vit_pytorch/vit_pytorch.py
 
 """
 
