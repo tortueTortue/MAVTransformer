@@ -23,7 +23,9 @@ mem_blocks_divider = Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=2,p2
 # TODO Optimize
 query =  mem_blocks_divider(w_query(small_pic_batch.view((1,1,6*6)).view((1,1,6,6))).view((1,1,9,4,1))
 key   =  mem_blocks_divider(w_key  (small_pic_batch.view((1,1,6*6)).view((1,1,6,6)))
-value =  mem_blocks_divider(w_value(small_pic_batch.view((1,1,6*6)).view((1,1,6,6)))
+value =  mem_blocks_divider(w_value(small_pic_batch.view((1,1,6*6)).view((1,1,6,6))).view((1,1,9,4,1))
 
 # q(i,j) * k(a,b) where i,j are pixel col and row AND a,b are memory block size
 att_score = soft(torch.einsum('b c n g q, b c n p -> n g p', q,k))
+
+torch.matmul(att_score, value).view(1,1,9*4)
