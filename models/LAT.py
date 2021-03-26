@@ -32,12 +32,15 @@ class AttentionConv(nn.Module):
         self.rel_w = nn.Parameter(torch.randn(out_channels // 2, 1, 1, 1, kernel_size), requires_grad=True)
 
         # Switch for linears for performance
-        # self.key_conv = nn.Linear(in_channels, out_channels, bias=bias)
-        # self.query_conv = nn.Linear(in_channels, out_channels, bias=bias)
-        # self.value_conv = nn.Linear(in_channels, out_channels, bias=bias)
-        self.key_conv = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=bias)
-        self.query_conv = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=bias)
-        self.value_conv = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=bias)
+        self.key_conv = nn.Linear(in_channels, out_channels, bias=bias)
+        self.query_conv = nn.Linear(in_channels, out_channels, bias=bias)
+        self.value_conv = nn.Linear(in_channels, out_channels, bias=bias)
+        # self.key_conv = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=bias)
+        # self.query_conv = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=bias)
+        # self.value_conv = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=bias)
+        # self.key_conv = nn.Conv2d(in_channels, 1, kernel_size=1, bias=bias)
+        # self.query_conv = nn.Conv2d(in_channels, 1, kernel_size=1, bias=bias)
+        # self.value_conv = nn.Conv2d(in_channels, 1, kernel_size=1, bias=bias)
 
         self.reset_parameters()
 
