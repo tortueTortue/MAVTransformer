@@ -14,10 +14,11 @@ def accuracy(outputs, labels):
 
     return torch.tensor(torch.sum(preds == labels).item() / len(preds))
 
-def print_accuracy_per_class(model: Module, classes: list, batch_size: int):
+def print_accuracy(model: Module, classes: list, batch_size: int, test_loader):
     class_amount = len(classes)
-    class_correct = list(0. for i in range(class_amount))
-    class_total = list(0. for i in range(class_amount))
+    class_correct = 0
+    class_total = 0
+    model.eval()
     with torch.no_grad():
         for batch in test_loader:
             i, l = batch
@@ -25,7 +26,26 @@ def print_accuracy_per_class(model: Module, classes: list, batch_size: int):
             out = model(i)
             _, predicted = torch.max(out, 1)
             c = (predicted == l).squeeze()
-            for i in range(batch_size):
+            for i in range(l.shape[0]):
+                label = l[i]
+                class_correct += c[i].item()
+                class_total += 1
+
+    print('Accuracy of : %2d %%' % (100 * class_correct / class_total))
+
+def print_accuracy_per_class(model: Module, classes: list, batch_size: int, test_loader):
+    class_amount = len(classes)
+    class_correct = list(0. for i in range(class_amount))
+    class_total = list(0. for i in range(class_amount))
+    model.eval()
+    with torch.no_grad():
+        for batch in test_loader:
+            i, l = batch
+            i, l = i.cuda(), l.cuda()
+            out = model(i)
+            _, predicted = torch.max(out, 1)
+            c = (predicted == l).squeeze()
+            for i in range(l.shape[0]):
                 label = l[i]
                 class_correct[label] += c[i].item()
                 class_total[label] += 1

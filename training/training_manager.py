@@ -4,6 +4,7 @@ Here are the training methods.
 from torch.utils.data import Dataset, DataLoader
 from torch.nn import Module, CrossEntropyLoss
 from torch.optim import SGD
+import torch
 
 from training.utils.utils import batches_to_device, get_default_device, to_device, save_checkpoints
 from training.metrics.metrics import accuracy
@@ -29,7 +30,7 @@ def evaluate(model: Module, val_set: DataLoader):
     epoch_acc = torch.stack(batch_accs).mean()
     return {'val_loss': epoch_loss.item(), 'val_acc': epoch_acc.item()}
 
-def train(epochs_no: int, model: Module, train_set: DataLoader, val_set: DataLoader):
+def train(epochs_no: int, model: Module, train_set: DataLoader, val_set: DataLoader, model_dir):
     loss = CrossEntropyLoss()
     history = []
     optimizer = SGD(model.parameters(), lr=0.001, momentum=0.9)
@@ -50,11 +51,11 @@ def train(epochs_no: int, model: Module, train_set: DataLoader, val_set: DataLoa
         print(result)
         history.append(result)
         if epoch % 10 == 0 :
-            save_checkpoints(epoch, model, optimizer, loss, PATH)
+            save_checkpoints(epoch, model, optimizer, loss, model_dir + f"checkpoint_{epoch}_{type(model).__name_}.pt")
     
     return history
 
-def train_model(epochs_no: int, model_to_train: Module, model_name: str, dataset: Dataset, batch_size: int):
+def train_model(epochs_no: int, model_to_train: Module, model_name: str, dataset: Dataset, batch_size: int, model_dir: str):
     model_to_train.train()
     device = get_default_device()
 
@@ -66,6 +67,6 @@ def train_model(epochs_no: int, model_to_train: Module, model_name: str, dataset
 
     model = to_device(model_to_train, device)
 
-    train(epochs_no, model, train_loader, val_loader)
+    train(epochs_no, model, train_loader, val_loader, model_dir)
 
     return model

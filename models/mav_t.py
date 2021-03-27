@@ -24,8 +24,8 @@ from models.LAT import LAT
 
 class MAViT(nn.Module):
     def __init__(self, image_size, patch_size, num_classes, dim, no_of_blocks, heads,
-                 mlp_dim, pool = 'cls', channels = 3, dim_head = 64, dropout = 0.,
-                 emb_dropout = 0., is_vit_first: bool = True, batch_size = 128):
+                 mlp_dim, memory_block_size=4, pool = 'cls', channels = 3, dim_head = 64, dropout = 0.,
+                 emb_dropout = 0., is_vit_first: bool = True, batch_size = 128, kernel_size=2):
         """
         args:
             dim : output vector length (in the case of ViT, it is the length of 
@@ -39,27 +39,32 @@ class MAViT(nn.Module):
 
         # Reshape patches into image
         self.no_of_patches = int((image_size / patch_size) ** 2)
+        
+        mlp_head_size = 0
 
-        if self.is_vit_first:
-            self.LAT = LAT(self.no_of_patches, no_of_blocks, dim, dropout = dropout)
-        else :
-            self.LAT = LAT(image_size, no_of_blocks, mlp_dim, dropout = dropout)
+        self.LAT = LAT(image_size**2, no_of_blocks, dropout = dropout,
+                        memory_block_size=memory_block_size, kernel_size=kernel_size)
+        mlp_head_size = (image_size**2) // kernel_size ** (2 * no_of_blocks)
+
         self.pool = pool
         self.to_latent = nn.Identity()
 
+        self.class_token_pool = nn.AvgPool1d(kernel_size=(dim//mlp_head_size))
+
         self.mlp_head = nn.Sequential(
-            nn.LayerNorm(dim),
-            nn.Linear(dim, num_classes)
+            nn.LayerNorm(mlp_head_size),
+            nn.Linear(mlp_head_size, num_classes)
         )
 
     def forward(self, x, mask = None):
-        if self.is_vit_first:
-            x = self.ViT(x)
-            class_token, x = torch.split(x, [1, self.no_of_patches], dim=1)
-            x = self.LAT(x)
-            x = torch.cat((class_token, x), dim=1)
-        else: 
-            x = self.ViT(self.LAT(x))
+        batch_size, channels, h, w = x.shape
+
+        x = self.ViT(x)
+        class_token, x = torch.split(x, [1, self.no_of_patches], dim=1)
+        x = self.LAT(x.view(batch_size, channels, h * w))
+        class_token = self.class_token_pool(class_token)
+        x = torch.cat((class_token, x), dim=1)
+
 
         x = x.mean(dim = 1) if self.pool == 'mean' else x[:, 0]
         x = self.to_latent(x)

@@ -25,3 +25,13 @@ def save_checkpoints(epoch: int, model: Module, optimizer: SGD, loss: _Loss, pat
 
 def save_model(model: Module, model_name: str, dir: str):
   torch.save(model, f'{dir}{model_name}.pt')
+
+def load_checkpoint(model: Module, checkpoint_path: str):
+  model.load_state_dict(torch.load(checkpoint_path))
+  model.eval()
+
+def load_model(path: str):
+  model = torch.load(path)
+  model.eval()
+
+  return model

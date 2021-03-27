@@ -4,17 +4,19 @@
 
 import torchvision.models as models
 from models.mav_t import MAViT
+from models.ViT import ViT_C
 
 from training.training_manager import train_model
 from dataset.cifar_data_loaders import Cifar10Dataset
-from training.utils.utils import save_model
-from training.metrics.metrics import print_accuracy_per_class, count_model_parameters
-
+from training.utils.utils import save_model, load_model, load_checkpoint
+from training.metrics.metrics import print_accuracy_per_class, print_accuracy, count_model_parameters
+import copy
 
 if __name__ == '__main__':
     # TODO Add as config
-    model_dir = ""
-    batch_size = 5
+    model_dir = "E:/Git/MAVTransformer/models/trained_models/"
+    checkpoint_dir = "E:/Git\MAVTransformer/training/checkpoints/checkpoint_mavt.pt"
+    batch_size = 15
     epochs = 100
     cifar10_data = Cifar10Dataset(batch_size=batch_size)
     classes = cifar10_data.classes
@@ -28,14 +30,22 @@ if __name__ == '__main__':
                  8 * 8, pool = 'cls', channels = 3, dim_head = 64, dropout = 0.,
                  emb_dropout = 0., is_vit_first=True, batch_size=batch_size)
     print(f"Parameters {count_model_parameters(vitFirst, False)}")
-    save_model(train_model(epochs, vitFirst, "vitFirst", cifar10_data, batch_size), "vitFirst", model_dir)
-    print_accuracy_per_class(vitFirst, classes, batch_size)
+    # save_model(train_model(epochs, vitFirst, "vitFirst", cifar10_data, batch_size, model_dir), "vitFirst", model_dir)
+    # vF = load_checkpoint(copy.deepcopy(vitFirst), checkpoint_dir)
+    # vitFirst = load_model(model_dir + "vitFirst.pt")
+    # print_accuracy_per_class(vitFirst, classes, batch_size, cifar10_data.test_loader)
+    # print_accuracy(vitFirst, classes, batch_size, cifar10_data.test_loader)
+
+    vit = ViT_C(32, 4, len(classes), 6 * 8, 6, 1, 8 * 8, pool = 'cls', channels = 3, dim_head = 64, dropout = 0., emb_dropout = 0.)
+    save_model(train_model(epochs, vit, "vitOnly", cifar10_data, batch_size, model_dir), "vitOnly", model_dir)
+    print_accuracy_per_class(vit, classes, batch_size, cifar10_data.test_loader)
+    print_accuracy(vit, classes, batch_size, cifar10_data.test_loader)
 
     # MAViT LAT first
-    latFirst = MAViT(32, 4, len(classes), 8 * 8, 3, 1,
-                 8 * 8, pool = 'cls', channels = 3, dim_head = 64, dropout = 0.,
-                 emb_dropout = 0., is_vit_first=False)
-    print(f"Parameters {count_model_parameters(latFirst, False)}")
-    save_model(train_model(epochs, latFirst, "latFirst", cifar10_data, batch_size), "latFirst", model_dir)
-    print_accuracy_per_class(latFirst, classes, batch_size)
+    # latFirst = MAViT(32, 4, len(classes), 8 * 8, 3, 1,
+    #              8 * 8, pool = 'cls', channels = 3, dim_head = 64, dropout = 0.,
+    #              emb_dropout = 0., is_vit_first=False)
+    # print(f"Parameters {count_model_parameters(latFirst, False)}")
+    # save_model(train_model(epochs, latFirst, "latFirst", cifar10_data, batch_size), "latFirst", model_dir)
+    # print_accuracy_per_class(latFirst, classes, batch_size)
 

@@ -30,7 +30,7 @@ class Cifar10Dataset:
         
         self.labels = dataset.classes
         self.classes = ['airplane', 'automobile', 'bird', 'cat', 'deer',
-                        'dog', 'deer', 'frog', 'horse', 'ship', 'truck' ]
+                        'dog', 'frog', 'horse', 'ship', 'truck' ]
 
 
         torch.manual_seed(43)
