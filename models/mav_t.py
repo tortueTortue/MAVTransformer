@@ -25,7 +25,7 @@ from models.LAT import LAT
 class MAViT(nn.Module):
     def __init__(self, image_size, patch_size, num_classes, dim, no_of_blocks, heads,
                  mlp_dim, memory_block_size=4, pool = 'cls', channels = 3, dim_head = 64, dropout = 0.,
-                 emb_dropout = 0., is_vit_first: bool = True, batch_size = 128, kernel_size=2):
+                 emb_dropout = 0., is_vit_first: bool = True, batch_size = 128, kernel_size=2, max_pooling_blocks=2):
         """
         args:
             dim : output vector length (in the case of ViT, it is the length of 
@@ -44,7 +44,7 @@ class MAViT(nn.Module):
 
         self.LAT = LAT(image_size**2, no_of_blocks, dropout = dropout,
                         memory_block_size=memory_block_size, kernel_size=kernel_size)
-        mlp_head_size = (image_size**2) // kernel_size ** (2 * no_of_blocks)
+        mlp_head_size = (image_size**2) // kernel_size ** (2 * (no_of_blocks-max_pooling_blocks))
 
         self.pool = pool
         self.to_latent = nn.Identity()
