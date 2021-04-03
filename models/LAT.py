@@ -25,7 +25,7 @@ class LAT(nn.Module):
         in_size = feature_size
         for i in range(no_of_blocks - max_pooling_blocks):
             attention = LocalAttention(in_size, in_size, memory_block_size, 1)
-            encoders.append(Encoder(in_size, 1, in_size, attention, dropout = dropout, with_avg_pooling=True))
+            encoders.append(Encoder(in_size, 1, in_size, attention, dropout = dropout, with_avg_pooling=False))
 
         for i in range(max_pooling_blocks):
             attention = LocalAttention(in_size, in_size, memory_block_size, kernel_size)

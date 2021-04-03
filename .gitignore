@@ -131,3 +131,5 @@ dmypy.json
 # pytorch data
 data/*
 data/*.tar.gz
+
+runs/*
