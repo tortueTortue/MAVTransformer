@@ -1,17 +1,22 @@
 # MAVTransformer
 Mixed-Attention Vision Transformer
 
+100 epochs each
 
 ## Results
 
 |Model      | Accuracy | Parameters |
 |-----------|----------|------------|
-|SASA       |      90 %|        ____|
-|ViT        |      99 %|        ____|
-|MAV-TViT1st|      51 %|     3535834|
+|SASA       |         %|        ____|
+|ViT        |         %|        ____|
+|MAV-T *    |      51 %|     3535834|
+|MAV-T- XL*✝|         %|    19320538|
+|ResNet18   |         %|    11174000|
+|ResNet34   |         %|    21521000|
+* Test with ViT has first block
+✝ Local Attention average pooling using in the last 3 encoder blocks.
 
-
-| MAV-T with ViT First accrucacy after 100 epochs
+| MAV-T with ViT First accuracy after 100 epochs
 Accuracy of airplane : 58 %
 Accuracy of automobile : 59 %
 Accuracy of  bird : 41 %
@@ -50,3 +55,6 @@ Accuracy of horse : 75 %
 Accuracy of  ship : 85 %
 Accuracy of truck : 78 %
 Accuracy of : 72 %
+
+ResNet18 100 epochs
+Para
